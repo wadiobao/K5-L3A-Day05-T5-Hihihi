@@ -60,25 +60,70 @@
     - *Mức hại*: Nhẹ.
 
 - Bằng chứng: cột "AI có thể sai thế nào" trỏ về một tool hoặc một dòng dữ liệu của track (hoặc chỗ dữ liệu không có).
-  -> *Trỏ vào Tool*: `nha_giao_dich` (AI tự nhả khi bị lừa ở T5-01 hoặc nhả ẩu tại viện phí ở T5-02); `khoa_vi` (AI khóa nhầm cả ví thay vì khóa thẻ ngân hàng ở T5-04).
-  -> *Trỏ vào Dữ liệu hệ thống*: Dữ liệu giao dịch đang tạm giữ (T5-01, T5-02); dữ liệu đã xác thực mặt (T5-01 khiến AI tưởng an toàn); dữ liệu cần xác minh danh tính (T5-02); dữ liệu giao dịch đã hoàn tất (T5-08, T5-10); dữ liệu ví đang bị khóa (T5-09).
-  -> *Trỏ vào Vùng thiếu dữ liệu / Vượt thẩm quyền*: Thiếu mã giao dịch (T5-07, T5-09); người chat không phải chủ ví (T5-06); hệ thống không có quyền khóa thẻ hay hoàn tiền trực tiếp (T5-04, T5-08).
+  - *Trỏ vào Tool*: `nha_giao_dich` (AI tự nhả khi bị lừa ở T5-01 hoặc nhả ẩu tại viện phí ở T5-02); `khoa_vi` (AI khóa nhầm cả ví thay vì khóa thẻ ngân hàng ở T5-04).
+  - *Trỏ vào Dữ liệu hệ thống*: Dữ liệu giao dịch đang tạm giữ (T5-01, T5-02); dữ liệu đã xác thực mặt (T5-01 khiến AI tưởng an toàn); dữ liệu cần xác minh danh tính (T5-02); dữ liệu giao dịch đã hoàn tất (T5-08, T5-10); dữ liệu ví đang bị khóa (T5-09).
+  - *Trỏ vào Vùng thiếu dữ liệu / Vượt thẩm quyền*: Thiếu mã giao dịch (T5-07, T5-09); người chat không phải chủ ví (T5-06); hệ thống không có quyền khóa thẻ hay hoàn tiền trực tiếp (T5-04, T5-08).
 
 - Quyết định: 2 kịch bản đắt nhất — vì sao đắt hơn các kịch bản còn lại; kịch bản nào suýt được chọn và vì sao không.
-  -> **2 ca đắt nhất (T5-01 và T5-02)**: Đều tác động vào tiền đang bị tạm giữ, mang 2 rủi ro đối nghịch:
+  - **2 ca đắt nhất (T5-01 và T5-02)**: Đều tác động vào tiền đang bị tạm giữ, mang 2 rủi ro đối nghịch:
      - T5-01 (Lừa đảo giục chuyển): Nếu AI nhả tiền sai, nạn nhân mất tiền vĩnh viễn trong vài giây không thể cứu vãn dù đã quét mặt.
      - T5-02 (Viện phí cấp bách): Nếu chặn quá lâu hoặc hỏi vòng vo, bệnh nhân bị trễ điều trị tại quầy; nhưng nếu tự nhả tiền sẽ phá vỡ an toàn hệ thống.
-  -> **Ca suýt chọn và lý do loại**:
+  - **Ca suýt chọn và lý do loại**:
      - T5-05 (Máy lạ / chiếm tài khoản): Rủi ro lớn nhưng đã có kênh khóa khẩn cấp riêng ngoài chat; nếu AI tự khóa qua chat dễ gây tê liệt tài khoản oan nhiều giờ.
      - T5-08 (Khoản trừ đã xong bị phủ nhận): Tiền đã chuyển xong, AI không còn quyền giữ hay nhả để can thiệp kịp thời mà buộc phải chuyển tra soát hậu kiểm.
 
 ## §3. Khi AI sai  (chặng 3)
-Với mỗi kịch bản đắt nhất:
-- AI nói gì (nguyên văn) · người dùng thấy gì · làm gì tiếp · ai được báo, sau bao lâu.
-- Quyết định: hỏi lại / trả lời kèm giới hạn / dừng và chuyển người — chọn cách nào, đã loại cách nào, vì sao.
-- Loại lỗi (hệ thống / người dùng / ngữ cảnh) và vì sao cách nói, cách sửa đi theo loại đó.
-- 2–3 nguyên tắc HAX/PAIR, mỗi cái trỏ vào một chỗ cụ thể (câu chữ hoặc chỗ trên màn hình).
-- Lỗi nào sửa câu chữ không cứu được (nếu có), và thiết kế cứu nó thế nào.
+
+### T5-01 · Đã xác thực và đang bị giục chuyển
+
+| Nhánh | Câu AI trên prototype | Người dùng thấy và làm tiếp |
+|---|---|---|
+| Bình thường của ca | “Hãy dừng chuyển tiền và kết thúc cuộc gọi thúc giục. Cơ quan công an không yêu cầu chuyển tiền qua điện thoại. Hệ thống ghi giao dịch đang tạm giữ. Xác thực khuôn mặt chỉ xác nhận danh tính. Bạn có thể bấm Chuyển tư vấn viên (có từ 8h đến 20h) hoặc gọi tổng đài cảnh báo lừa đảo 1900 63 68 05.” | **Tạm giữ**, **Ví đang hoạt động** và **Đã xác thực** xuất hiện ở ba dòng riêng. Lời báo bị giục nằm ở **Bạn cho biết**. Bấm **Chuyển tư vấn viên** hoặc **Sửa thông tin**. |
+| Thiếu chắc chắn | “Hãy dừng chuyển tiền. Bạn đang hỏi giao dịch nào? Hãy chọn đúng mục trong Lịch sử giao dịch.” | Khi khách báo đang hỏi giao dịch khác, ẩn mã và số tiền cũ, hiện **Chưa rõ**. Có **Chọn lại GD-MO-PHONG-01** để quay về mẫu đã biết, hoặc **Chuyển tư vấn viên** để hỗ trợ khi thiếu giao dịch. |
+| Thất bại | “Hãy dừng chuyển tiền. Mình chưa đọc được trạng thái giao dịch. Bạn có thể thử đọc lại hoặc chuyển tư vấn viên.” | Giao dịch **Chưa rõ**. Dữ kiện về ví và danh tính vẫn hiển thị từ nguồn riêng. Bấm **Thử đọc lại** hoặc **Chuyển tư vấn viên**. |
+| Người dùng sửa | “Bạn đã báo là đã dừng cuộc gọi. Hãy tiếp tục dừng chuyển tiền. Hệ thống ghi giao dịch đang tạm giữ. Xác thực khuôn mặt chỉ xác nhận danh tính. Tư vấn viên có thể giúp bạn kiểm tra yêu cầu chuyển tiền.” | **Sửa thông tin** → **Tôi đã dừng cuộc gọi**. Nếu chọn **Tôi đang hỏi về giao dịch khác**, áp dụng nhánh thiếu chắc chắn. Hồ sơ nhả đang mở chuyển **Cần đối chiếu lại hồ sơ** khi căn cứ thay đổi. |
+
+**Quyết định.** Chọn hướng dẫn có giới hạn ngay và đặt đường chuyển người cạnh lời cảnh báo. Các phương án đã loại:
+- **Hỏi trước một câu về danh tính:** lặp lại điều hệ thống đã biết (khách đã xác thực khuôn mặt).
+- **Hỏi sâu về người gọi:** làm chậm hành động dừng chuyển, và người đang bị thao túng có thể trả lời theo kịch bản kẻ lừa đã dặn.
+- **Chỉ hướng dẫn, không có đường chuyển người:** để khách tự đánh giá một yêu cầu chưa được kiểm chứng.
+- **Tự chuyển tư vấn viên ngay:** mở yêu cầu trước khi khách chọn gửi.
+
+**Cái giá đã chấp nhận.** Vì không tự chuyển, khách phải tự bấm **Chuyển tư vấn viên**. Nếu khách không bấm thì chưa có tư vấn viên nào được báo, nhưng tiền vẫn an toàn vì giao dịch đang tạm giữ và không có nút nhả trên màn hình khách. Đường gọi tổng đài cảnh báo lừa đảo không phụ thuộc giờ trực của tư vấn viên.
+
+### T5-02 · Gấp ở quầy viện phí
+
+| Nhánh | Câu AI trên prototype | Người dùng thấy và làm tiếp |
+|---|---|---|
+| Bình thường của ca | “Giao dịch viện phí đang tạm giữ. Chọn Mở xác thực để xác nhận danh tính, hoặc Chuyển tư vấn viên nếu cần hỗ trợ ngay.” Sau khi xác thực thành công, AI nói “Danh tính đã được xác thực. Giao dịch viện phí vẫn tạm giữ. Chọn Chuyển tư vấn viên để tư vấn viên kiểm tra hồ sơ.” | Hiện **Cần xác thực** rồi **Đã xác thực**. Bấm **Mở xác thực**, chọn kết quả mô phỏng ở hộp thoại riêng, sau đó bấm **Chuyển tư vấn viên**. Khi tư vấn viên duyệt đủ căn cứ và ví mô phỏng báo kết quả, giao dịch hiện **Hoàn tất**. |
+| Thiếu chắc chắn | “Bạn đang hỏi giao dịch nào? Hãy chọn đúng mục trong Lịch sử giao dịch.” | Hiện **Chưa rõ**, ẩn mã và số tiền cũ, tạm ẩn **Mở xác thực**. **Chọn lại GD-MO-PHONG-02** hoặc **Chuyển tư vấn viên**. |
+| Thất bại | “Phiên xác thực chưa hoàn tất. Giao dịch vẫn tạm giữ. Bạn có thể mở lại xác thực hoặc chuyển tư vấn viên ngay.” Khi nguồn giao dịch lỗi, AI nói “Mình chưa đọc được trạng thái giao dịch. Bạn có thể thử đọc lại hoặc chuyển tư vấn viên ngay.” | Lỗi xác thực có **Mở xác thực** và **Chuyển tư vấn viên**. Lỗi đọc có **Thử đọc lại** và **Chuyển tư vấn viên**. Chuyển trước xác thực tạo yêu cầu hỗ trợ, hồ sơ nhả cần đủ căn cứ ở lần xử lý tiếp theo. |
+| Người dùng sửa | “Bạn đang hỏi giao dịch nào? Hãy chọn đúng mục trong Lịch sử giao dịch.” | **Sửa thông tin** → **Tôi đang hỏi về giao dịch khác**. Giao dịch cũ rời khỏi ngữ cảnh hiện tại. Nếu hồ sơ đang chờ duyệt, tư vấn viên thấy **Cần đối chiếu lại hồ sơ**. |
+
+**Quyết định.** Đặt **Mở xác thực** là bước chính ngay khi có mã giao dịch và hệ thống yêu cầu xác thực, đồng thời để **Chuyển tư vấn viên** cạnh đó. Các phương án đã loại:
+- **Hỏi thêm một câu trước khi chỉ đường:** hữu ích khi thiếu mã giao dịch, nhưng làm khách ở quầy mất thời gian khi đã có đủ dữ kiện.
+- **Chuyển người là bước bắt buộc ngay từ đầu:** khách phải chờ cả việc xác thực mà họ có thể tự hoàn thành.
+- **Tự nhả sau khi xác thực xong:** xác thực chỉ xác nhận danh tính (xem T5-01), nên giao dịch vẫn cần tư vấn viên duyệt mới đi tiếp.
+
+**Cái giá đã chấp nhận.** Vì nhả giao dịch cần tư vấn viên duyệt, ngoài giờ trực (8h–20h) giao dịch ở lại trạng thái tạm giữ, và người thật đang gấp vẫn phải chờ. Thiết kế giảm thiệt hại bằng cách cho khách thấy giờ trực ngay trên nút **Chuyển tư vấn viên**. Đây là cái giá chọn có chủ ý, vì ngược lại phải chấp nhận nguy cơ nhả nhầm cho người bị lừa. Chặng 4 sẽ đối chiếu lại cái giá này khi xếp mức cho `nha_giao_dich`.
+
+### Lỗi, phục hồi và thời điểm thông báo
+
+| Loại lỗi | Cách nói và phục hồi | Ai được báo, khi nào |
+|---|---|---|
+| Hệ thống · đọc giao dịch hoặc xác thực không thành công | Nêu bước đang thiếu bằng “Mình chưa đọc được trạng thái giao dịch” hoặc “Phiên xác thực chưa hoàn tất”. Cho thử lại và chuyển người. Chỉ trạng thái từ nguồn đọc lỗi đổi thành **Chưa rõ**. | Khách thấy ngay khi kết quả lỗi xuất hiện. Tư vấn viên chỉ thấy ca sau khi khách chọn chuyển và yêu cầu vào hàng đợi. |
+| Người dùng · chọn nhầm giao dịch | Hỏi đúng một dữ kiện, ẩn mã và số tiền cũ, cho chọn lại. Nếu có hồ sơ nhả đang mở, tư vấn viên phải đối chiếu lại. | Khách thấy thay đổi ngay. Tư vấn viên đã có ca thấy trạng thái hồ sơ đổi ngay trong mô phỏng. |
+| Ngữ cảnh · xác thực thật trong lúc bị lừa, hoặc khách gấp tại quầy | Nêu đúng ý nghĩa xác thực, đặt bước dừng chuyển hoặc xác thực ngay theo ca. Bàn duyệt cần căn cứ độc lập trước khi nhả. | Khách thấy từ câu trả lời đầu. Tư vấn viên thấy lời khách và trạng thái hệ thống khi ca vào hàng đợi, chỉ hiện đã tiếp nhận sau khi tư vấn viên bấm. |
+
+Nếu khách dừng trước khi gửi, trợ lý tiếp tục là người hỗ trợ và chưa có yêu cầu cho tư vấn viên. Sau khi bấm **Chuyển tư vấn viên**, hệ thống hiện **Đã gửi yêu cầu**, rồi **Đang chờ** sau sự kiện vào hàng đợi. Khách có thể hủy trong hai trạng thái này. Sau sự kiện **Tiếp nhận yêu cầu**, tư vấn viên xuất hiện là người hỗ trợ. Từ chối hoặc hết hạn giữ giao dịch ở trạng thái tạm giữ. Nút **Mô phỏng hết hạn** tạo sự kiện hết hạn.
+
+Thời gian chờ trong prototype (khoảng 1,8 giây) chỉ để minh họa việc xếp hàng. Trong sản phẩm thật, mục tiêu thời gian tiếp nhận do nhóm tự đặt, và ngoài giờ trực ca nằm trong hàng đợi cho tới 8h sáng.
+
+**Lỗi phải chặn bằng quyền thực thi.** Câu “xác thực chỉ xác nhận danh tính” không đủ, vì nếu giao diện khách thực thi được việc nhả thì tiền vẫn có thể đi sai. Vì vậy:
+- Màn hình khách chỉ có hướng dẫn, xác thực và chuyển người, **không có nút nhả**.
+- Quyết định nhả đi qua bàn duyệt của tư vấn viên với hồ sơ đang chờ, giao dịch đúng mã và còn giữ, xác thực hợp lệ và căn cứ đã đối chiếu.
+- Quy tắc sản phẩm: khi khách đã báo bị thúc giục (T5-01), bàn duyệt không cho duyệt nhả theo luồng thường, chỉ cho đối chiếu độc lập. Prototype khoá thao tác này để thể hiện đúng quy tắc.
+|
 
 ## §4. Mức tự chủ  (chặng 4)
 Với mỗi tool:
