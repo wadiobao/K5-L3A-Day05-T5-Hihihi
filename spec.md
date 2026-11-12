@@ -139,8 +139,17 @@ Thêm:
 - 1–2 ảnh có đánh số; mỗi số: thể hiện gì · nguyên tắc HAX/PAIR nào · mức tự chủ nào.
 - Quyết định: cách hiện độ chắc/bằng chứng và điều khiển mức tự chủ — đã nghĩ tới cách nào khác, vì sao chọn cách này.
 
-## §6. Tốt là gì  (chặng 6 — nhẹ, bỏ được nếu thiếu giờ)
-- 3 tiêu chí Pass/Fail chấm được; thiết kế của nhóm đạt tiêu chí nào trên 2 kịch bản đắt nhất; lỗi còn lại.
+## §6. Tốt là gì (R6)
 
+Nhóm dùng ba tiêu chí dưới đây để chấm thử thiết kế trên hai ca khó: T5-01 (bị giục chuyển tiền) và T5-02 (gấp ở quầy viện phí). Kết quả hiện có được ghi nhận từ kiểm thử JavaScript với DOM và đồng hồ mô phỏng.
+
+| Tiêu chí | Mã ca | Thao tác đã thử | Kỳ vọng | Kết quả quan sát | Bằng chứng | Kết luận |
+|---|---|---|---|---|---|---|
+| **P1 · Đúng quyền nhả giao dịch** | T5-01, T5-02 | T5-01: tiếp nhận rồi thử từ chối và hết hạn ở hai lượt riêng. T5-02: xác thực thành công, tiếp nhận, đối chiếu và duyệt nhả. | T5-01 giữ giao dịch sau khi từ chối hoặc hết hạn. T5-02 chỉ hoàn tất sau khi chuyên viên đối chiếu, bấm duyệt và ví mô phỏng xác nhận. | T5-01 hiện **Tạm giữ** sau cả hai lượt. T5-02 hiện **Đã xác thực** và **Tạm giữ** sau xác thực. Nút duyệt chỉ bật sau khi chuyên viên xác nhận đã đối chiếu. Sau khi duyệt, giao dịch hiện **Hoàn tất**. | E01, E02, E04, E05 | **Pass logic** · Trình duyệt **Chưa chạy** |
+| **P2 · Hỗ trợ và phục hồi đúng bước** | T5-01, T5-02 | T5-01: gửi yêu cầu, hủy khi đang chờ, gửi lại và tiếp nhận. T5-02: mô phỏng lỗi xác thực, thử lại và thử chuyển tư vấn viên trước xác thực ở một lượt riêng. | Trạng thái hỗ trợ phản ánh đúng thao tác đã xảy ra. Khi xác thực lỗi, khách có thể thử lại hoặc chuyển tư vấn viên. Chuyển trước xác thực chỉ tạo yêu cầu hỗ trợ. | T5-01 hiện **Đã gửi yêu cầu → Đang chờ → Đã hủy yêu cầu**. Sau khi gửi lại, trạng thái **Tư vấn viên đã tiếp nhận** chỉ xuất hiện khi chuyên viên bấm tiếp nhận. T5-02 có cả hai đường phục hồi. Chuyển sớm chưa tạo hồ sơ duyệt nhả. | E01, E04, E06, E07 | **Pass logic** · Trình duyệt **Chưa chạy** |
+| **P3 · Hiển thị đúng trạng thái và nguồn** | T5-01, T5-02, đối chiếu T5-09 | T5-01: mô phỏng lỗi đọc và đổi giao dịch khi hồ sơ đang chờ duyệt. T5-02: kiểm tra hai trạng thái sau xác thực. T5-09: kiểm tra ca ví bị khóa. | Lỗi đọc hoặc đổi giao dịch làm ẩn mã cũ. Trạng thái giao dịch, ví và danh tính được hiển thị theo dữ liệu của từng nguồn. | T5-01 hiện giao dịch **Chưa rõ** và ẩn mã cũ. Khi đổi giao dịch, hồ sơ hiện **Cần đối chiếu lại hồ sơ**. T5-02 hiển thị riêng **Danh tính: Đã xác thực** và **Giao dịch: Tạm giữ**. T5-09 hiển thị **Ví: Đã khóa** và **Giao dịch: Chưa rõ**. | E03, E04, E08 và kiểm tra T5-09 | **Pass logic** · Trình duyệt **Chưa chạy** |
+**Tổng hợp.** Cả 3 tiêu chí đạt ở mức logic. Tổng cộng 16 nhóm kiểm tra logic và nội dung HTML đã đạt, phủ cả 10 ca mô phỏng.
+
+**Phạm vi còn chờ kiểm tra.** Cần bấm lại T5-01 và T5-02 trên trình duyệt, kiểm tra giao diện và lưu hai ảnh bằng chứng. Khi chấm thử, ghi Pass nếu kết quả khớp kỳ vọng, Fail kèm bước tái hiện nếu có sai lệch, và Chưa chạy đối với nhánh chưa thử.
 ## §7. Demo
 - Ca lạ nhận được ở demo: prototype đã làm gì, và nhóm có đổi ý gì sau ca đó không.
