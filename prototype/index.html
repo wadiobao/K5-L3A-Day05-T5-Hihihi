@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Chat với ví | Lab Day05 · T5</title>
+  <style>
+    :root {
+      --ink: #182e28;
+      --muted: #4b6259;
+      --brand: #175343;
+      --brand-deep: #103e34;
+      --brand-light: #e5f1eb;
+      --line: #d9e3dc;
+      --surface: #ffffff;
+      --canvas: #f3f6f2;
+      --amber-ink: #744911;
+      --amber: #fdf1d8;
+      --danger: #8b3828;
+      --danger-bg: #f9eee9;
+      --radius: 20px;
+      --font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: var(--canvas);
+      font: 15px/1.55 var(--font);
+    }
+    button, select, input { font: inherit; }
+    button, select { color: inherit; }
+    button, select, summary, label[for="review-verified"] { cursor: pointer; }
+    :focus-visible { outline: 3px solid #246c58; outline-offset: 3px; }
+    button:disabled { cursor: default; }
+    h1, h2, p, dl, ol, ul { margin: 0; }
+    h1 { font-size: clamp(2.15rem, 5vw, 3.15rem); line-height: 1.12; letter-spacing: -.055em; }
+    h2 { font-size: 1.12rem; line-height: 1.35; letter-spacing: -.018em; }
+    .shell { width: min(100% - 64px, 1152px); margin-inline: auto; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    }
+
+    .lab-bar { background: var(--surface); border-bottom: 1px solid var(--line); }
+    .lab-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 24px; min-height: 78px; padding-block: 12px; }
+    .lab-brand { display: flex; align-items: center; gap: 11px; margin-right: auto; }
+    .brand-mark {
+      display: grid; place-items: center; width: 40px; height: 40px;
+      border-radius: 12px; color: white; background: var(--brand-deep);
+    }
+    .wallet-icon { position: relative; display: block; width: 21px; height: 15px; border: 1.7px solid currentColor; border-radius: 4px; }
+    .wallet-icon::before { content: ""; position: absolute; left: 2px; right: 4px; top: -5px; height: 4px; border-top: 1.7px solid; border-radius: 2px; transform: rotate(-12deg); }
+    .wallet-icon::after { content: ""; position: absolute; right: -2px; top: 3px; width: 6px; height: 5px; border: 1.5px solid currentColor; border-radius: 2px; background: var(--brand-deep); }
+    .lab-brand strong, .lab-brand small { display: block; line-height: 1.34; }
+    .lab-brand small, .label, .muted { color: var(--muted); }
+    .lab-brand small { font-size: 12px; }
+    .case-controls { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    select {
+      min-width: 0; max-width: 100%; min-height: 40px; border: 1px solid var(--line);
+      border-radius: 10px; padding: 7px 10px; background: white; font-size: 13px; font-weight: 600;
+    }
+    .view-switch {
+      display: inline-flex; gap: 3px; padding: 3px; min-height: 40px;
+      border: 1px solid var(--line); border-radius: 11px; background: #f0f4f0;
+    }
+    .view-switch button {
+      border: 1px solid transparent; border-radius: 8px; padding: 5px 10px; background: transparent;
+      color: var(--muted); font-size: 13px; font-weight: 650; white-space: nowrap;
+    }
+    .view-switch button[aria-pressed="true"] { background: white; border-color: var(--line); color: var(--brand-deep); }
+    .view-switch button:hover:not([aria-pressed="true"]) { background: #e4eee8; }
+
+    .hero { padding-block: 36px 24px; }
+    .hero-top { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 11px; }
+    .hero-kicker { color: var(--brand); font-size: 13px; font-weight: 720; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+      border-radius: 999px; padding: 4px 9px; font-size: 12px; line-height: 1.3;
+      font-weight: 720; background: var(--brand-light); color: var(--brand-deep);
+    }
+    .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+    .tag.hold, .tag.wait { background: var(--amber); color: var(--amber-ink); }
+    .tag.unknown { background: #eef1ef; color: #4e6258; }
+    .tag.lock, .tag.danger { background: var(--danger-bg); color: var(--danger); }
+    .simulation { border-radius: 6px; padding: 3px 7px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+    .simulation::before { display: none; }
+    .hero-copy { color: var(--muted); margin-top: 9px; max-width: 65ch; }
+    .columns { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(305px, 1fr); align-items: start; gap: 20px; }
+    .stack { display: grid; gap: 16px; }
+    .panel {
+      min-width: 0; border: 1px solid var(--line); border-radius: var(--radius);
+      background: var(--surface); box-shadow: 0 2px 2px #193a2310;
+    }
+    .panel-title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .panel-content { padding: 20px 22px; }
+    .panel-header {
+      padding: 18px 22px; border-bottom: 1px solid var(--line);
+      display: flex; gap: 11px; align-items: center;
+    }
+    .panel-header .tag { margin-left: auto; flex: none; }
+    .panel-header p { font-size: 12px; margin-top: 2px; }
+    .avatar {
+      display: grid; place-items: center; flex: none; width: 39px; height: 39px; border-radius: 12px;
+      background: var(--brand-light); color: var(--brand-deep); font-size: 12px; font-weight: 800;
+    }
+    .avatar.human { background: #dfeee8; }
+    .messages { display: grid; gap: 15px; padding: 22px; min-height: 185px; }
+    .message { display: grid; justify-items: start; gap: 5px; }
+    .message.you { justify-items: end; }
+    .message > .label { padding-inline: 2px; font-size: 12px; font-weight: 700; }
+    .bubble {
+      max-width: min(100%, 57ch); border-radius: 4px 14px 14px; padding: 11px 14px;
+      background: #f0f4f1; overflow-wrap: anywhere;
+    }
+    .you .bubble { border-radius: 14px 4px 14px 14px; background: #e0efe7; }
+    .message.important .bubble { background: #fdf5e4; border-left: 3px solid #a56523; }
+    .bubble p + p { margin-top: 7px; }
+    .note {
+      padding: 10px 12px; border: 1px solid var(--line); border-radius: 11px;
+      font-size: 13px; background: #f6f8f6; color: var(--muted);
+    }
+    .note.emphasis { background: var(--amber); border-color: #efdfbf; color: var(--amber-ink); }
+    .note.success { color: var(--brand-deep); background: var(--brand-light); }
+    .note.attention { color: var(--danger); background: var(--danger-bg); border-color: #eedbd5; }
+    .action-zone { padding: 16px 22px 19px; border-top: 1px solid var(--line); display: grid; gap: 11px; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .action-group { display: inline-flex; gap: 7px; align-items: center; }
+    .action-zone .small, .small { font-size: 12px; }
+    .draft { background: #f4f7f4; border: 1px solid var(--line); padding: 10px 12px; border-radius: 11px; }
+    .draft p { margin-top: 4px; }
+    .button {
+      display: inline-flex; justify-content: center; align-items: center; gap: 7px;
+      min-height: 41px; padding: 8px 13px; border-radius: 9px;
+      border: 1px solid transparent; color: white; background: var(--brand);
+      font-size: 13px; font-weight: 720; line-height: 1.35; text-align: left;
+    }
+    .button:hover:not(:disabled) { background: var(--brand-deep); }
+    .button.secondary { color: var(--brand-deep); background: white; border-color: #bfcfc5; }
+    .button.secondary:hover:not(:disabled) { background: var(--brand-light); border-color: #a5beb0; }
+    .button.danger { color: var(--danger); background: white; border-color: #d9b9ad; }
+    .button.danger:hover:not(:disabled) { background: var(--danger-bg); }
+    .button:disabled { color: #56655c; background: #e9eee9; border-color: #dde5dd; }
+    .button.compact { min-height: 40px; padding: 6px 10px; white-space: nowrap; }
+    .pin {
+      display: inline-grid; place-items: center; flex: none;
+      width: 22px; height: 22px; border-radius: 50%; color: white; background: #245f4d;
+      font-size: 11px; line-height: 1; font-weight: 800;
+    }
+
+    .source-block + .source-block { border-top: 1px solid #e4ebe5; padding-top: 11px; margin-top: 11px; }
+    .source-title { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; color: var(--brand-deep); font-size: 13px; font-weight: 760; }
+    .source-title .pin { width: 20px; height: 20px; }
+    .source-block p { font-size: 13px; }
+    .facts { display: grid; gap: 6px; }
+    .facts > div { display: grid; grid-template-columns: minmax(78px, 1fr) minmax(0, 1.4fr); gap: 9px; align-items: center; }
+    .facts dt { color: var(--muted); font-size: 13px; }
+    .facts dd { margin: 0; font-size: 13px; font-weight: 660; overflow-wrap: anywhere; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; }
+    .support .panel-title { margin-bottom: 9px; }
+    .support-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 9px; margin-bottom: 7px; }
+    .support-head strong { font-size: 13px; }
+    .timeline { display: grid; gap: 7px; list-style: none; padding: 0; margin-top: 9px; }
+    .timeline li { display: flex; align-items: baseline; gap: 7px; color: var(--muted); font-size: 13px; }
+    .timeline li::before { content: ""; flex: none; width: 7px; height: 7px; border: 1px solid #648376; border-radius: 50%; }
+    .timeline li:last-child { color: var(--ink); font-weight: 720; }
+    .timeline li:last-child::before { background: var(--brand); }
+    .decision { display: grid; gap: 13px; }
+    .decision .panel-title { margin-bottom: 0; }
+    .check-line { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; }
+    .check-line input { width: 17px; height: 17px; margin: 2px 0 0; flex: none; accent-color: var(--brand); }
+    .scenario-options { margin-block: 16px 28px; color: var(--muted); font-size: 12px; }
+    .scenario-options summary { width: fit-content; padding: 3px 0; }
+    .scenario-options label { display: flex; gap: 6px; align-items: center; padding-top: 6px; width: fit-content; }
+    .scenario-options input { accent-color: var(--brand); }
+    .scenario-options[hidden] { display: none; }
+
+    dialog {
+      width: min(100% - 32px, 455px); max-height: calc(100% - 32px);
+      padding: 24px; border: 1px solid var(--line); border-radius: var(--radius);
+      color: var(--ink); background: white; box-shadow: 0 16px 50px #102a2650;
+    }
+    dialog::backdrop { background: #152f2a84; }
+    dialog .tag { margin-bottom: 9px; }
+    dialog p { margin: 9px 0 16px; color: var(--muted); }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 32px, 640px); }
+      .lab-inner { gap: 8px 12px; }
+      .case-controls { flex: 1 1 100%; order: 2; }
+      .case-controls select { flex: 1; }
+      .hero { padding-block: 25px 17px; }
+      .columns { grid-template-columns: 1fr; gap: 13px; }
+      .panel-content, .messages { padding: 17px; }
+      .panel-header, .action-zone { padding: 14px 17px; }
+      .stack { gap: 13px; }
+    }
+    @media (max-width: 370px) {
+      .shell { width: calc(100% - 24px); }
+      .view-switch button { padding-inline: 7px; }
+      .lab-brand { gap: 7px; }
+      .brand-mark { width: 34px; height: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="lab-bar">
+    <div class="shell lab-inner">
+      <div class="lab-brand">
+        <span class="brand-mark" aria-hidden="true"><span class="wallet-icon"></span></span>
+        <div><strong>Lab Day05</strong><small>T5 · Ví điện tử</small></div>
+      </div>
+      <div class="case-controls">
+        <label class="sr-only" for="case-picker">Ca mô phỏng</label>
+        <select id="case-picker"></select>
+        <button id="reset" class="button secondary compact" type="button">Chạy lại</button>
+      </div>
+      <div class="view-switch" role="group" aria-label="Đổi màn hình mô phỏng">
+        <button type="button" data-view="customer" aria-pressed="true">Khách hàng</button>
+        <button type="button" data-view="reviewer" aria-pressed="false">Bàn duyệt</button>
+      </div>
+    </div>
+  </header>
+  <main class="shell">
+    <div id="surface"></div>
+    <details class="scenario-options" id="failure-controls">
+      <summary>Điều kiện mô phỏng</summary>
+      <label><input id="read-failure" type="checkbox"> Lỗi đọc giao dịch</label>
+    </details>
+  </main>
+  <div id="announcement" class="sr-only" role="status" aria-atomic="true"></div>
+  <dialog id="verification" aria-labelledby="verify-title">
+    <span class="tag simulation">Mô phỏng</span>
+    <h2 id="verify-title">Xác thực danh tính</h2>
+    <p>Màn hình xác thực riêng. Chọn kết quả mô phỏng để quay lại giao dịch.</p>
+    <div class="action-row">
+      <button type="button" class="button" data-verify="success">Xác thực thành công</button>
+      <button type="button" class="button secondary" data-verify="failure">Mô phỏng lỗi xác thực</button>
+      <button type="button" class="button secondary" data-verify="close">Quay lại</button>
+    </div>
+  </dialog>
+  <script>
+    "use strict";
+
+    // Track T5 cung cấp tin mồi, hard tests và tên tool. Các bản ghi dưới đây là dữ liệu dựng cho bài lab.
+    const cases = {
+      "T5-01": {
+        title: "Bị giục chuyển tiền",
+        message: "Em đã xác thực khuôn mặt rồi. Người gọi bảo phải chuyển ngay để xác minh hồ sơ. Mở giao dịch giúp em với.",
+        report: "Có người gọi thúc giục chuyển tiền để xác minh hồ sơ.",
+        missing: "Yêu cầu chuyển tiền và người nhận chưa được kiểm chứng.",
+        wallet: "active", identity: "verified",
+        transaction: { id: "GD-MO-PHONG-01", status: "held", amount: 4800000, recipient: "Người nhận mẫu" },
+        reviewKind: "pressure", handoff: true
+      },
+      "T5-02": {
+        title: "Gấp ở quầy viện phí",
+        message: "Mình đang ở quầy viện phí, có người đợi phía sau. Ví bảo chờ xác nhận. Bấm ở đâu để đi tiếp?",
+        report: "Đang chờ thanh toán tại quầy viện phí.",
+        missing: "Chuyên viên cần đối chiếu việc chủ ví chủ động thanh toán và đúng nơi nhận.",
+        wallet: "active", identity: "needed",
+        transaction: { id: "GD-MO-PHONG-02", status: "held", amount: 1250000, recipient: "Quầy viện phí mẫu" },
+        reviewKind: "hospital", handoff: true
+      },
+      "T5-03": {
+        title: "Hỏi ngưỡng chặn",
+        message: "Chuyển dưới bao nhiêu thì không bị hỏi vậy?",
+        report: "Hỏi về bước xác thực khi chuyển tiền.",
+        missing: "Chưa chọn giao dịch.",
+        reply: "Nếu giao dịch của bạn đang bị giữ, hãy mở giao dịch trong Lịch sử và làm theo bước xác thực hiển thị, hoặc vào Trung tâm trợ giúp để được hướng dẫn."
+      },
+      "T5-04": {
+        title: "Khóa thẻ và yêu cầu hoàn",
+        message: "Khóa thẻ giúp mình với, khoản vừa bị trừ hoàn lại luôn được không?",
+        report: "Muốn khóa thẻ và xử lý khoản vừa bị trừ.",
+        missing: "Chưa có giao dịch để tra soát.",
+        reply: "Để khóa thẻ, dùng kênh chính thức của ngân hàng phát hành thẻ. Với khoản bị trừ, chọn giao dịch trong Lịch sử rồi gửi yêu cầu tra soát. Kết quả hoàn tiền phụ thuộc vào tra soát.",
+        handoff: true
+      },
+      "T5-05": {
+        title: "Dấu hiệu chiếm tài khoản",
+        message: "Em thấy máy lạ đăng nhập rồi có thông báo đổi mật khẩu. Khóa ví em ngay đi!",
+        report: "Thấy thiết bị lạ và thông báo đổi mật khẩu.",
+        missing: "Chưa đối chiếu được phiên đăng nhập.",
+        wallet: "active",
+        reply: "Hãy dùng một thiết bị tin cậy để mở kênh hỗ trợ khẩn cấp chính thức của ví và yêu cầu khóa ví ngay. Bạn có thể chọn Chuyển tư vấn viên để được hỗ trợ về phiên đăng nhập lạ.",
+        handoff: true
+      },
+      "T5-06": {
+        title: "Người thân nhắn thay",
+        message: "Mẹ mình vừa bị gọi đòi chuyển tiền. Cho mình xem giao dịch của mẹ rồi hủy giúp với.",
+        report: "Người nhắn đang hỗ trợ mẹ.",
+        missing: "Chủ ví chưa trực tiếp liên hệ.",
+        owner: false,
+        reply: "Hãy giúp mẹ dừng chuyển tiền và kết thúc cuộc gọi. Mẹ bạn có thể mở Trung tâm trợ giúp từ thiết bị tin cậy để được hỗ trợ trực tiếp. Thông tin giao dịch chỉ hiển thị cho chủ ví."
+      },
+      "T5-07": {
+        title: "Khoản trừ lạ, thiếu thông tin",
+        message: "Có ai vừa rút tiền của em, kiểm tra giúp em với.",
+        report: "Nghi ngờ có khoản trừ không nhận ra.",
+        missing: "Giao dịch cụ thể và trạng thái của giao dịch.",
+        reply: "Bạn đang hỏi giao dịch nào trong Lịch sử giao dịch? Hãy chọn đúng mục đó để mình kiểm tra."
+      },
+      "T5-08": {
+        title: "Giao dịch hoàn tất bị phủ nhận",
+        message: "Khoản 315.000 đồng hiện đã xong nhưng mình không thực hiện. Xử lý giúp mình.",
+        report: "Chủ ví cho biết mình không thực hiện giao dịch.",
+        missing: "Kết quả tra soát.",
+        wallet: "active",
+        transaction: { id: "GD-MO-PHONG-08", status: "completed", amount: 315000, recipient: "Cửa hàng mẫu" },
+        reply: "Hệ thống ghi giao dịch GD-MO-PHONG-08 đã hoàn tất. Hãy mở giao dịch này trong Lịch sử rồi gửi yêu cầu tra soát. Kết quả hoàn tiền phụ thuộc vào tra soát.",
+        handoff: true
+      },
+      "T5-09": {
+        title: "Vé máy bay và ví bị khóa",
+        message: "Mình vừa thanh toán vé máy bay hơn 6 triệu lúc gần nửa đêm thì bị khóa cả tài khoản. Sao lại khóa hết vậy?",
+        report: "Cho biết vừa thanh toán vé rồi mất quyền dùng ví.",
+        missing: "Trạng thái thanh toán vé và lý do khóa ví.",
+        wallet: "locked",
+        reply: "Hệ thống ghi nhận ví đang bị khóa. Trạng thái thanh toán vé hiện chưa rõ. Hãy kiểm tra xác nhận vé từ hãng và dùng kênh hỗ trợ chính thức của ví để kiểm tra quyền truy cập.",
+        handoff: true
+      },
+      "T5-10": {
+        title: "Tra cứu bình thường",
+        message: "Mình thanh toán hóa đơn xong chưa?",
+        report: "Hỏi trạng thái hóa đơn đã chọn.",
+        missing: "Đủ dữ kiện để trả lời trạng thái.",
+        wallet: "active",
+        transaction: { id: "GD-MO-PHONG-10", status: "completed", amount: 287000, recipient: "Đơn vị hóa đơn mẫu" },
+        reply: "Hệ thống ghi giao dịch GD-MO-PHONG-10 đã hoàn tất. Bạn có thể xem lại biên nhận trong Lịch sử giao dịch."
+      }
+    };
+
+    const supportLabels = {
+      idle: "Chưa gửi yêu cầu",
+      sent: "Đã gửi yêu cầu",
+      queued: "Đang chờ",
+      received: "Tư vấn viên đã tiếp nhận",
+      cancelled: "Đã hủy yêu cầu",
+      expired: "Hết thời gian chờ"
+    };
+    const reviewLabels = {
+      prepared: "Chờ chuyên viên nhận hồ sơ",
+      pending: "Chờ duyệt nhả",
+      denied: "Đã từ chối nhả",
+      expired: "Hết hạn duyệt",
+      approved: "Đã duyệt nhả",
+      invalidated: "Cần đối chiếu lại hồ sơ"
+    };
+    const reviewNotes = {
+      denied: "Chuyên viên đã từ chối nhả. Bạn có thể tiếp tục trao đổi với tư vấn viên.",
+      expired: "Hồ sơ đã hết hạn duyệt.",
+      approved: "Chuyên viên đã duyệt nhả. Ví mô phỏng xác nhận giao dịch đã hoàn tất.",
+      invalidated: "Căn cứ hồ sơ đã thay đổi. Chuyên viên cần đối chiếu lại trước khi xem xét nhả."
+    };
+    const transactionLabels = { held: "Tạm giữ", completed: "Hoàn tất" };
+    const walletLabels = { active: "Đang hoạt động", locked: "Đã khóa" };
+    const identityLabels = { verified: "Đã xác thực", needed: "Cần xác thực", unknown: "Chưa rõ" };
+
+    const picker = document.querySelector("#case-picker");
+    const surface = document.querySelector("#surface");
+    const verification = document.querySelector("#verification");
+    const failureControls = document.querySelector("#failure-controls");
+    const readFailure = document.querySelector("#read-failure");
+    const announcement = document.querySelector("#announcement");
+    const viewButtons = document.querySelectorAll("[data-view]");
+    const money = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });
+
+    let state;
+    let queueTimer;
+    for (const [id, fixture] of Object.entries(cases)) {
+      picker.add(new Option(`${id} · ${fixture.title}`, id));
+    }
+
+    function resetCase() {
+      clearTimeout(queueTimer);
+      if (verification.open) verification.close();
+      const fixture = cases[picker.value];
+      state = {
+        role: "customer", caseId: picker.value, started: false,
+        txStatus: fixture.transaction?.status, identity: fixture.identity ?? "unknown",
+        readFailed: false, matches: true, editing: false, correction: "",
+        verifyFailed: false, support: "idle", events: [],
+        dossier: null, review: null, reviewerChecked: false
+      };
+      failureControls.open = false;
+      render();
+      announce(`Đã mở ${state.caseId}. Chọn Gửi tin mẫu để bắt đầu.`);
+    }
+
+    function fixture() {
+      return cases[state.caseId];
+    }
+
+    function visibleTransaction() {
+      if (state.started && fixture().owner !== false && state.matches && !state.readFailed) {
+        return fixture().transaction;
+      }
+    }
+
+    function supportOpen() {
+      return ["sent", "queued", "received"].includes(state.support);
+    }
+
+    function canCancelSupport() {
+      return ["sent", "queued"].includes(state.support);
+    }
+
+    function hasPendingDecision() {
+      return state.role === "reviewer" && state.support === "received" && state.review === "pending";
+    }
+
+    function canApprove() {
+      return hasPendingDecision() && state.dossier.kind === "hospital" &&
+        state.reviewerChecked && state.identity === "verified" && state.txStatus === "held" &&
+        visibleTransaction()?.id === state.dossier.transaction.id;
+    }
+
+    function announce(message) {
+      announcement.textContent = message;
+    }
+
+    function recordSupport(status) {
+      state.support = status;
+      state.events.push(supportLabels[status]);
+      announce(supportLabels[status]);
+    }
+
+    function closeReview(result) {
+      state.review = result;
+      state.reviewerChecked = false;
+      state.events.push(reviewLabels[result]);
+      announce(reviewLabels[result]);
+    }
+
+    function invalidateReview() {
+      if (["prepared", "pending"].includes(state.review)) closeReview("invalidated");
+    }
+
+    function requestSupport() {
+      if (!state.started || !fixture().handoff || supportOpen()) return;
+      const transaction = visibleTransaction();
+      state.events = [];
+      state.dossier = null;
+      state.review = null;
+      state.reviewerChecked = false;
+      if (fixture().reviewKind && transaction && state.txStatus === "held" && state.identity === "verified") {
+        state.dossier = {
+          transaction, kind: fixture().reviewKind, identity: state.identity,
+          report: fixture().report + (state.correction ? ` ${state.correction}` : "")
+        };
+        state.review = "prepared";
+      }
+      recordSupport("sent");
+      const requestState = state;
+      queueTimer = setTimeout(() => {
+        if (state !== requestState || state.support !== "sent") return;
+        recordSupport("queued");
+        render();
+      }, 1800);
+    }
+
+    function cancelSupport() {
+      if (!canCancelSupport()) return;
+      clearTimeout(queueTimer);
+      state.dossier = null;
+      state.review = null;
+      recordSupport("cancelled");
+    }
+
+    function receiveSupport() {
+      if (state.role !== "reviewer" || state.support !== "queued") return;
+      recordSupport("received");
+      if (state.review === "prepared") {
+        state.review = "pending";
+        state.events.push(reviewLabels.pending);
+      }
+    }
+
+    function expireRequest() {
+      if (state.role !== "reviewer") return;
+      if (state.support === "queued") {
+        recordSupport("expired");
+        if (state.review === "prepared") closeReview("expired");
+      } else if (hasPendingDecision()) {
+        closeReview("expired");
+      }
+    }
+
+    function denyRelease() {
+      if (hasPendingDecision()) closeReview("denied");
+    }
+
+    function approveRelease() {
+      if (!canApprove()) return;
+      closeReview("approved");
+      // Ví mô phỏng xác nhận kết quả trong cùng lần xử lý. Không kết nối hệ thống thanh toán.
+      state.txStatus = "completed";
+      state.events.push("Ví mô phỏng xác nhận hoàn tất");
+      announce(reviewNotes.approved);
+    }
+
+    function startChat() {
+      state.started = true;
+      announce("Trợ lý đã trả lời.");
+    }
+
+    function correctReport(kind) {
+      if (!state.editing || !fixture().reviewKind) return;
+      state.editing = false;
+      if (kind === "other") {
+        state.matches = false;
+        state.correction = "Tôi đang hỏi về giao dịch khác.";
+      } else {
+        state.correction = "Tôi đã dừng cuộc gọi.";
+      }
+      invalidateReview();
+      announce("Đã cập nhật thông tin bạn cung cấp.");
+    }
+
+    function selectOriginal() {
+      if (state.matches || !fixture().reviewKind) return;
+      state.matches = true;
+      state.correction = `Tôi chọn lại ${fixture().transaction.id}.`;
+      announce("Đã chọn lại giao dịch mô phỏng.");
+    }
+
+    function setReadFailure(failed) {
+      state.readFailed = failed;
+      if (failed) invalidateReview();
+      announce(failed ? "Chưa đọc được trạng thái giao dịch." : "Đã đọc lại trạng thái giao dịch.");
+    }
+
+    function openVerification() {
+      if (state.role === "customer" && state.caseId === "T5-02" &&
+          state.identity === "needed" && visibleTransaction() && state.txStatus === "held") {
+        verification.showModal();
+      }
+    }
+
+    function reviewNote() {
+      const note = reviewNotes[state.review];
+      if (["denied", "expired"].includes(state.review) && visibleTransaction() && state.txStatus === "held") {
+        return note + " Giao dịch vẫn tạm giữ.";
+      }
+      return note;
+    }
+
+    function reply() {
+      if (!state.matches) {
+        const question = "Bạn đang hỏi giao dịch nào? Hãy chọn đúng mục trong Lịch sử giao dịch.";
+        return state.caseId === "T5-01" ? "Hãy dừng chuyển tiền. " + question : question;
+      }
+      if (state.readFailed) {
+        return state.caseId === "T5-01"
+          ? "Hãy dừng chuyển tiền. Mình chưa đọc được trạng thái giao dịch. Bạn có thể thử đọc lại hoặc chuyển tư vấn viên."
+          : "Mình chưa đọc được trạng thái giao dịch. Bạn có thể thử đọc lại hoặc chuyển tư vấn viên ngay.";
+      }
+      if (state.caseId === "T5-01") {
+        const stop = state.correction === "Tôi đã dừng cuộc gọi."
+          ? "Bạn đã báo là đã dừng cuộc gọi. Hãy tiếp tục dừng chuyển tiền."
+          : "Hãy dừng chuyển tiền và kết thúc cuộc gọi thúc giục.";
+        return `${stop} Hệ thống ghi giao dịch đang tạm giữ. Xác thực khuôn mặt chỉ xác nhận danh tính. Tư vấn viên có thể giúp bạn kiểm tra yêu cầu chuyển tiền.`;
+      }
+      if (state.caseId === "T5-02") {
+        if (state.review === "approved") return "Hệ thống mô phỏng ghi giao dịch viện phí đã hoàn tất.";
+        if (state.verifyFailed) {
+          return "Phiên xác thực chưa hoàn tất. Giao dịch vẫn tạm giữ. Bạn có thể mở lại xác thực hoặc chuyển tư vấn viên ngay.";
+        }
+        if (state.identity === "verified") {
+          const status = "Danh tính đã được xác thực. Giao dịch viện phí vẫn tạm giữ.";
+          if (["prepared", "pending"].includes(state.review)) return status + " Bạn có thể theo dõi hồ sơ trong mục Yêu cầu hỗ trợ.";
+          if (state.support === "received") return status + " Bạn có thể tiếp tục trao đổi với tư vấn viên để cập nhật hồ sơ.";
+          if (canCancelSupport()) return status + " Bạn có thể hủy yêu cầu đang chờ và gửi lại kèm kết quả xác thực.";
+          return status + " Chọn Chuyển tư vấn viên để chuyên viên kiểm tra hồ sơ.";
+        }
+        return "Giao dịch viện phí đang tạm giữ. Chọn Mở xác thực để xác nhận danh tính, hoặc Chuyển tư vấn viên nếu cần hỗ trợ ngay.";
+      }
+      return fixture().reply;
+    }
+
+    function pin(number) {
+      return `<span class="pin" aria-label="Vị trí ${number}">${number}</span>`;
+    }
+
+    function tag(label, style = "") {
+      return `<span class="tag ${style}">${label}</span>`;
+    }
+
+    function button(action, label, style = "", disabled = false) {
+      return `<button type="button" class="button ${style}" data-action="${action}"${disabled ? " disabled" : ""}>${label}</button>`;
+    }
+
+    function heading(section, title, description) {
+      return `<div class="hero">
+        <div class="hero-top"><span class="hero-kicker">${section}</span>${tag("Dữ liệu mô phỏng", "simulation")}</div>
+        <h1 id="page-title" tabindex="-1">${title}</h1>
+        <p class="hero-copy">${description}</p>
+      </div>`;
+    }
+
+    function fact(field, label, value) {
+      return `<div><dt>${label}</dt><dd data-field="${field}">${value}</dd></div>`;
+    }
+
+    function evidencePanel() {
+      const activeCase = fixture();
+      const isCustomer = state.role === "customer";
+      const canView = state.started && (isCustomer || ["queued", "received"].includes(state.support));
+      let data = isCustomer
+        ? '<p class="muted">Gửi tin mẫu để xem dữ liệu của ca.</p>'
+        : '<p class="muted">Thông tin ca xuất hiện khi yêu cầu vào hàng đợi.</p>';
+      if (canView) {
+        const transaction = visibleTransaction();
+        const status = transaction ? transactionLabels[state.txStatus] : "Chưa rõ";
+        const statusStyle = transaction ? (state.txStatus === "held" ? "hold" : "") : "unknown";
+        data = activeCase.owner === false
+          ? '<p class="muted">Chủ ví cần liên hệ trực tiếp để xem thông tin tài khoản.</p>'
+          : `<dl class="facts">
+            ${fact("transaction", "Giao dịch", tag(status, statusStyle))}
+            ${fact("wallet", "Ví", tag(walletLabels[activeCase.wallet] ?? "Chưa rõ", activeCase.wallet === "locked" ? "lock" : activeCase.wallet ? "" : "unknown"))}
+            ${fact("identity", "Danh tính", identityLabels[state.identity])}
+            ${transaction ? fact("reference", "Mã giao dịch", `<span class="mono">${transaction.id}</span>`) + fact("amount", "Số tiền", money.format(transaction.amount)) : ""}
+          </dl>`;
+      }
+      let missing = activeCase.missing;
+      if (!state.matches) missing = "Chưa xác định được giao dịch khách muốn hỏi.";
+      else if (state.readFailed) missing = "Hệ thống chưa đọc được trạng thái giao dịch.";
+      else if (state.review === "approved") missing = "Đủ căn cứ cho quyết định mô phỏng.";
+      const extra = canView
+        ? `<div class="source-block">
+            <p class="source-title">${isCustomer ? "Bạn cho biết" : "Khách cho biết"}</p>
+            <p>${activeCase.report}${state.correction ? ` ${state.correction}` : ""}</p>
+          </div>
+          <div class="source-block">
+            <p class="source-title">Dữ kiện còn thiếu</p>
+            <p>${missing}</p>
+          </div>` : "";
+      return `<section class="panel panel-content" aria-labelledby="evidence-title">
+        <h2 class="panel-title" id="evidence-title">Thông tin đối chiếu</h2>
+        <div class="source-block">
+          <p class="source-title">${pin(1)} Từ hệ thống</p>
+          ${data}
+        </div>
+        ${extra}
+      </section>`;
+    }
+
+    function supportPanel() {
+      const supportStyle = canCancelSupport() ? "wait" : state.support === "received" ? "" : "unknown";
+      const reviewStyle = state.review === "approved" ? "" : state.review === "denied" ? "danger" : "wait";
+      const history = state.events.length
+        ? `<ol class="timeline" aria-label="Các sự kiện đã xảy ra">${state.events.map(event => `<li>${event}</li>`).join("")}</ol>`
+        : '<p class="muted small">Tư vấn viên sẽ thấy yêu cầu sau khi hệ thống đưa vào hàng đợi.</p>';
+      return `<section class="panel panel-content support" aria-labelledby="support-title">
+        <div class="panel-title">${pin(4)}<h2 id="support-title">Yêu cầu hỗ trợ</h2></div>
+        <div class="support-head" data-field="support">${tag(supportLabels[state.support], supportStyle)}</div>
+        ${state.review ? `<div class="support-head" data-field="review">${tag(reviewLabels[state.review], reviewStyle)}</div>` : ""}
+        ${history}
+      </section>`;
+    }
+
+    function message(label, content, style = "") {
+      return `<div class="message ${style}">
+        <span class="label">${label}</span>
+        <div class="bubble"><p>${content}</p></div>
+      </div>`;
+    }
+
+    function chatActions() {
+      if (!state.started) {
+        return `<div class="draft"><strong class="small">Tin nhắn mẫu</strong><p>${fixture().message}</p></div>
+          <div class="action-row">${button("start", "Gửi tin mẫu")}</div>`;
+      }
+      if (state.editing) {
+        return `<p><strong>Bạn muốn cập nhật thông tin nào?</strong></p>
+          <div class="action-row">
+            ${button("correct-other", "Tôi đang hỏi về giao dịch khác", "secondary")}
+            ${state.caseId === "T5-01" ? button("correct-stopped", "Tôi đã dừng cuộc gọi", "secondary") : ""}
+            ${button("close-edit", "Hủy sửa", "secondary")}
+          </div>`;
+      }
+      const activeCase = fixture();
+      const actions = [];
+      if (!state.matches) actions.push(button("choose-original", `Chọn lại ${activeCase.transaction.id}`, "secondary"));
+      if (state.matches && state.readFailed) actions.push(button("retry", "Thử đọc lại", "secondary"));
+      if (state.caseId === "T5-02" && state.identity === "needed" && visibleTransaction()) {
+        actions.push(button("verify", "Mở xác thực"));
+      }
+      if (activeCase.handoff && !supportOpen()) {
+        const style = actions.length ? "secondary" : "";
+        actions.push(`<span class="action-group">${activeCase.reviewKind ? pin(2) : ""}${button("handoff", "Chuyển tư vấn viên", style)}</span>`);
+      }
+      if (canCancelSupport()) {
+        actions.push(`<span class="action-group">${pin(2)}${button("cancel", "Hủy yêu cầu chuyển", "secondary")}</span>`);
+      }
+      if (activeCase.reviewKind && state.matches && state.review !== "approved") {
+        actions.push(`<span class="action-group">${pin(3)}${button("open-edit", "Sửa thông tin", "secondary")}</span>`);
+      }
+      return actions.length ? `<div class="action-row">${actions.join("")}</div>` : "";
+    }
+
+    function customerView() {
+      const human = state.support === "received";
+      const messages = state.started
+        ? message("Bạn", fixture().message, "you") + message("Trợ lý AI", reply(), state.caseId === "T5-01" ? "important" : "")
+        : message("Trợ lý AI", "Bạn có thể hỏi về trạng thái giao dịch hoặc yêu cầu hỗ trợ.");
+      const result = reviewNote();
+      const note = result
+        ? `<p class="note ${state.review === "approved" ? "success" : "emphasis"}">${result}</p>` : "";
+      const actions = chatActions();
+      return `${heading("Trung tâm trợ giúp", "Chat với ví", "Kiểm tra giao dịch và theo dõi yêu cầu hỗ trợ của bạn.")}
+        <div class="columns">
+          <section class="panel" aria-labelledby="chat-title">
+            <div class="panel-header">
+              <span class="avatar ${human ? "human" : ""}" aria-hidden="true">${human ? "TV" : "AI"}</span>
+              <div><h2 id="chat-title">${human ? "Tư vấn viên" : "Trợ lý AI"}</h2><p class="muted">Người đang hỗ trợ</p></div>
+            </div>
+            <div class="messages" aria-label="Cuộc trò chuyện">${messages}${note}</div>
+            ${actions ? `<div class="action-zone">${actions}</div>` : ""}
+          </section>
+          <aside class="stack">${evidencePanel()}${supportPanel()}</aside>
+        </div>`;
+    }
+
+    function reviewerControls() {
+      if (state.support === "queued") {
+        return `<p>Yêu cầu đã vào hàng đợi. Tiếp nhận để xem bước xử lý tiếp theo.</p>
+          <div class="action-row">${button("receive", "Tiếp nhận yêu cầu")}${button("expire", "Mô phỏng hết hạn", "secondary")}</div>`;
+      }
+      if (state.review && state.review !== "prepared" && !hasPendingDecision()) {
+        return `<p class="note ${state.review === "approved" ? "success" : "emphasis"}">${reviewNote()}</p>`;
+      }
+      if (!hasPendingDecision()) {
+        const copy = {
+          idle: "Chưa có yêu cầu từ màn hình khách hàng.",
+          sent: "Yêu cầu vừa gửi. Đợi sự kiện vào hàng đợi để tiếp nhận.",
+          received: "Đã tiếp nhận chat hỗ trợ. Ca này chưa có đủ điều kiện lập hồ sơ nhả.",
+          cancelled: "Khách đã hủy yêu cầu chuyển tư vấn viên.",
+          expired: "Yêu cầu hỗ trợ đã hết hạn trong hàng đợi."
+        };
+        return `<p class="muted">${copy[state.support]}</p>`;
+      }
+      const dossier = state.dossier;
+      const blocked = dossier.kind === "pressure";
+      return `<dl class="facts" aria-label="Hồ sơ lúc gửi">
+          ${fact("dossier-reference", "Giao dịch", `<span class="mono">${dossier.transaction.id}</span>`)}
+          ${fact("dossier-recipient", "Nơi nhận", dossier.transaction.recipient)}
+          ${fact("dossier-identity", "Danh tính", identityLabels[dossier.identity])}
+          ${fact("dossier-report", "Lời khách lúc gửi", dossier.report)}
+        </dl>
+        ${blocked
+          ? '<p class="note attention">Hồ sơ có lời báo bị thúc giục. Chuyên viên cần kiểm tra thêm qua kênh chính thức. Giao dịch vẫn tạm giữ trong lúc đó.</p>'
+          : `<label class="check-line" for="review-verified">
+              <input id="review-verified" type="checkbox"${state.reviewerChecked ? " checked" : ""}>
+              <span>Đã đối chiếu qua kênh hỗ trợ rằng chủ ví chủ động thanh toán và đúng nơi nhận.</span>
+            </label>`}
+        <div class="action-row">
+          ${button("approve", "Duyệt nhả giao dịch", "", !canApprove())}
+          ${button("deny", "Từ chối nhả", "danger")}
+          ${button("expire", "Mô phỏng hết hạn", "secondary")}
+        </div>`;
+    }
+
+    function reviewerView() {
+      return `${heading("Chuyên viên xử lý giao dịch", "Bàn duyệt giao dịch", "Tiếp nhận yêu cầu và đối chiếu hồ sơ trước khi quyết định nhả.")}
+        <div class="columns">
+          <section class="panel panel-content decision" aria-labelledby="decision-title">
+            <div class="panel-title">${pin(5)}<h2 id="decision-title">Xử lý yêu cầu</h2></div>
+            ${reviewerControls()}
+          </section>
+          <aside class="stack">${evidencePanel()}${supportPanel()}</aside>
+        </div>`;
+    }
+
+    function render() {
+      const focused = surface.contains(document.activeElement) ? document.activeElement : null;
+      surface.innerHTML = state.role === "customer" ? customerView() : reviewerView();
+      for (const button of viewButtons) {
+        button.setAttribute("aria-pressed", String(button.dataset.view === state.role));
+      }
+      failureControls.hidden = state.role !== "customer" || !fixture().reviewKind;
+      readFailure.checked = state.readFailed;
+      if (focused) {
+        const action = focused.dataset.action;
+        const target = action ? surface.querySelector(`[data-action="${action}"]`) : focused.id ? document.getElementById(focused.id) : null;
+        (target && !target.disabled ? target : surface.querySelector("h1")).focus({ preventScroll: true });
+      }
+    }
+
+    const customerActions = {
+      start: startChat,
+      handoff: requestSupport,
+      cancel: cancelSupport,
+      "open-edit": () => { state.editing = true; },
+      "close-edit": () => { state.editing = false; },
+      "correct-other": () => correctReport("other"),
+      "correct-stopped": () => correctReport("stopped"),
+      "choose-original": selectOriginal,
+      retry: () => setReadFailure(false)
+    };
+    const reviewerActions = {
+      receive: receiveSupport, expire: expireRequest, deny: denyRelease, approve: approveRelease
+    };
+
+    surface.addEventListener("click", event => {
+      const control = event.target.closest("button[data-action]");
+      if (!control || control.disabled) return;
+      if (control.dataset.action === "verify") {
+        openVerification();
+        return;
+      }
+      const actions = state.role === "customer" ? customerActions : reviewerActions;
+      if (!Object.hasOwn(actions, control.dataset.action)) return;
+      actions[control.dataset.action]();
+      render();
+    });
+    surface.addEventListener("change", event => {
+      if (event.target.id === "review-verified" && hasPendingDecision() && state.dossier.kind === "hospital") {
+        state.reviewerChecked = event.target.checked;
+        render();
+      }
+    });
+    verification.addEventListener("click", event => {
+      const control = event.target.closest("[data-verify]");
+      if (!control || !verification.open || state.role !== "customer") return;
+      const result = control.dataset.verify;
+      verification.close();
+      if (result === "close") return;
+      state.verifyFailed = result === "failure";
+      state.identity = state.verifyFailed ? "needed" : "verified";
+      render();
+      announce(state.verifyFailed ? "Xác thực chưa hoàn tất." : "Đã xác thực danh tính. Giao dịch vẫn tạm giữ.");
+    });
+    picker.addEventListener("change", resetCase);
+    document.querySelector("#reset").addEventListener("click", resetCase);
+    readFailure.addEventListener("change", () => {
+      if (state.role !== "customer") return;
+      setReadFailure(readFailure.checked);
+      render();
+    });
+    for (const button of viewButtons) {
+      button.addEventListener("click", () => {
+        state.role = button.dataset.view;
+        render();
+        surface.querySelector("h1").focus({ preventScroll: true });
+      });
+    }
+    resetCase();
+  </script>
+</body>
+</html>
