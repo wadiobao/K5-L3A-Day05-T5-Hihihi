@@ -89,6 +89,10 @@
     .simulation { border-radius: 6px; padding: 3px 7px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
     .simulation::before { display: none; }
     .hero-copy { color: var(--muted); margin-top: 9px; max-width: 65ch; }
+    .tool-jump {
+      margin-inline-start: auto; color: var(--brand-deep); font-size: 13px; font-weight: 700;
+      text-underline-offset: 3px;
+    }
     .columns { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(305px, 1fr); align-items: start; gap: 20px; }
     .stack { display: grid; gap: 16px; }
     .panel {
@@ -178,6 +182,21 @@
     .scenario-options input { accent-color: var(--brand); }
     .scenario-options[hidden] { display: none; }
 
+    .tool-panel { margin-block: 18px 28px; scroll-margin-top: 16px; }
+    .tool-panel .panel-title { justify-content: space-between; gap: 4px 16px; }
+    .tool-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+    .tool-table th, .tool-table td {
+      padding: 10px 10px 10px 0; border-top: 1px solid var(--line);
+      text-align: left; vertical-align: top; overflow-wrap: anywhere;
+    }
+    .tool-table thead th { border-top: 0; padding-top: 0; color: var(--muted); font-size: 12px; }
+    .tool-table thead th:first-child { width: 28%; }
+    .tool-table thead th:nth-child(2) { width: 44%; }
+    .tool-table tbody th { font-weight: 700; }
+    .tool-table code { display: block; margin-top: 2px; color: var(--muted); font-weight: 500; }
+    .tool-table td p { margin-top: 4px; }
+    .tool-table [data-tool-state] { color: var(--brand-deep); font-weight: 650; }
+
     dialog {
       width: min(100% - 32px, 455px); max-height: calc(100% - 32px);
       padding: 24px; border: 1px solid var(--line); border-radius: var(--radius);
@@ -197,6 +216,8 @@
       .panel-content, .messages { padding: 17px; }
       .panel-header, .action-zone { padding: 14px 17px; }
       .stack { gap: 13px; }
+      .tool-jump { margin-inline-start: 0; }
+      .tool-table th, .tool-table td { padding-right: 6px; }
     }
     @media (max-width: 370px) {
       .shell { width: calc(100% - 24px); }
@@ -230,6 +251,44 @@
       <summary>Điều kiện mô phỏng</summary>
       <label><input id="read-failure" type="checkbox"> Lỗi đọc giao dịch</label>
     </details>
+    <section class="panel panel-content tool-panel" id="tool-panel" aria-labelledby="tool-title" tabindex="-1">
+      <div class="panel-title">
+        <h2 id="tool-title">Công cụ và mức tự chủ</h2>
+        <p class="muted small">Ca mô phỏng <strong id="tool-case"></strong></p>
+      </div>
+      <table class="tool-table" aria-labelledby="tool-title">
+        <thead>
+          <tr><th scope="col">Công cụ</th><th scope="col">Mức tự chủ</th><th scope="col">Trong ca này</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Giữ giao dịch<code class="mono">giu_giao_dich</code></th>
+            <td><span class="tag">Tự làm</span><p class="muted">AI giữ giao dịch đang chờ khi đúng mã, đúng chủ ví và có đủ căn cứ.</p></td>
+            <td data-tool-state="giu_giao_dich"></td>
+          </tr>
+          <tr>
+            <th scope="row">Yêu cầu xác minh<code class="mono">yeu_cau_xac_minh</code></th>
+            <td><span class="tag">Tự làm</span><p class="muted">AI mở xác thực riêng khi khách chọn và hệ thống yêu cầu.</p></td>
+            <td data-tool-state="yeu_cau_xac_minh"></td>
+          </tr>
+          <tr>
+            <th scope="row">Chuyển tư vấn viên<code class="mono">chuyen_tu_van_vien</code></th>
+            <td><span class="tag">Tự làm</span><p class="muted">AI gửi theo yêu cầu của khách. Khách có thể hủy trước khi tư vấn viên tiếp nhận.</p></td>
+            <td data-tool-state="chuyen_tu_van_vien"></td>
+          </tr>
+          <tr>
+            <th scope="row">Nhả giao dịch<code class="mono">nha_giao_dich</code></th>
+            <td><span class="tag wait">Cần người duyệt</span><p class="muted">AI chuẩn bị hồ sơ. Chuyên viên có thẩm quyền đối chiếu và quyết định nhả.</p></td>
+            <td data-tool-state="nha_giao_dich"></td>
+          </tr>
+          <tr>
+            <th scope="row">Khóa ví<code class="mono">khoa_vi</code></th>
+            <td><span class="tag lock">Cấm</span><p class="muted">AI hướng dẫn khách tới kênh khóa ví chính thức.</p></td>
+            <td data-tool-state="khoa_vi"></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
   </main>
   <div id="announcement" class="sr-only" role="status" aria-atomic="true"></div>
   <dialog id="verification" aria-labelledby="verify-title">
@@ -367,6 +426,8 @@
     const readFailure = document.querySelector("#read-failure");
     const announcement = document.querySelector("#announcement");
     const viewButtons = document.querySelectorAll("[data-view]");
+    const toolCase = document.querySelector("#tool-case");
+    const toolStateCells = document.querySelectorAll("[data-tool-state]");
     const money = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });
 
     let state;
@@ -383,7 +444,7 @@
         role: "customer", caseId: picker.value, started: false,
         txStatus: fixture.transaction?.status, identity: fixture.identity ?? "unknown",
         readFailed: false, matches: true, editing: false, correction: "",
-        verifyFailed: false, support: "idle", events: [],
+        verificationRequested: false, verifyFailed: false, support: "idle", events: [],
         dossier: null, review: null, reviewerChecked: false
       };
       failureControls.open = false;
@@ -538,7 +599,36 @@
       if (state.role === "customer" && state.caseId === "T5-02" &&
           state.identity === "needed" && visibleTransaction() && state.txStatus === "held") {
         verification.showModal();
+        state.verificationRequested = true;
+        renderToolStates();
       }
+    }
+
+    function renderToolStates() {
+      const activeCase = fixture();
+      const canSeeCase = state.started && (state.role === "customer" || ["queued", "received"].includes(state.support));
+      let identityActivity = "Chưa gọi";
+      if (canSeeCase && state.verificationRequested) {
+        if (verification.open) identityActivity = "Đang xác thực";
+        else if (state.identity === "verified") identityActivity = "Đã xác thực";
+        else if (state.verifyFailed) identityActivity = "Xác thực chưa hoàn tất";
+        else identityActivity = "Đã mở xác thực, chưa có kết quả";
+      } else if (canSeeCase && activeCase.identity === "verified") {
+        identityActivity = "Đã xác thực từ dữ liệu mẫu";
+      }
+      let lockActivity = "Chưa gọi";
+      if (canSeeCase && state.caseId === "T5-05") lockActivity = "Đã hướng dẫn kênh khóa ví";
+      else if (canSeeCase && activeCase.wallet === "locked") lockActivity = "Ví đã khóa theo dữ liệu mẫu";
+
+      const statuses = {
+        giu_giao_dich: canSeeCase && visibleTransaction()?.status === "held" ? "Tạm giữ từ dữ liệu mẫu" : "Chưa gọi",
+        yeu_cau_xac_minh: identityActivity,
+        chuyen_tu_van_vien: supportLabels[state.support],
+        nha_giao_dich: state.review === "approved" ? "Đã nhả giao dịch" : (reviewLabels[state.review] ?? "Chưa lập hồ sơ"),
+        khoa_vi: lockActivity
+      };
+      toolCase.textContent = state.caseId;
+      for (const cell of toolStateCells) cell.textContent = statuses[cell.dataset.toolState];
     }
 
     function reviewNote() {
@@ -596,7 +686,10 @@
 
     function heading(section, title, description) {
       return `<div class="hero">
-        <div class="hero-top"><span class="hero-kicker">${section}</span>${tag("Dữ liệu mô phỏng", "simulation")}</div>
+        <div class="hero-top">
+          <span class="hero-kicker">${section}</span>${tag("Dữ liệu mô phỏng", "simulation")}
+          <a class="tool-jump" href="#tool-panel">Xem công cụ và mức tự chủ</a>
+        </div>
         <h1 id="page-title" tabindex="-1">${title}</h1>
         <p class="hero-copy">${description}</p>
       </div>`;
@@ -784,6 +877,7 @@
       }
       failureControls.hidden = state.role !== "customer" || !fixture().reviewKind;
       readFailure.checked = state.readFailed;
+      renderToolStates();
       if (focused) {
         const action = focused.dataset.action;
         const target = action ? surface.querySelector(`[data-action="${action}"]`) : focused.id ? document.getElementById(focused.id) : null;
@@ -835,6 +929,7 @@
       render();
       announce(state.verifyFailed ? "Xác thực chưa hoàn tất." : "Đã xác thực danh tính. Giao dịch vẫn tạm giữ.");
     });
+    verification.addEventListener("close", renderToolStates);
     picker.addEventListener("change", resetCase);
     document.querySelector("#reset").addEventListener("click", resetCase);
     readFailure.addEventListener("change", () => {
